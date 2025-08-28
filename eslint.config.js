@@ -12,6 +12,14 @@ export default [
         ecmaVersion: 'latest',
         sourceType: 'module',
       },
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        Request: 'readonly',
+        Response: 'readonly',
+        URL: 'readonly',
+        React: 'readonly',
+      },
     },
     plugins: {
       '@typescript-eslint': tseslint,
@@ -21,6 +29,6 @@ export default [
     },
   },
   {
-    ignores: ['**/dist/**', '.turbo', 'node_modules'],
+    ignores: ['**/dist/**', '.turbo', 'node_modules', '**/.next/**'],
   },
 ]

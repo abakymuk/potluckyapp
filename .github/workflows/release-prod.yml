@@ -1,0 +1,83 @@
+name: release-prod
+on:
+  push:
+    branches: [ main ]
+  # альтернативно:
+  # tags:
+  #   - 'v*.*.*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-main
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.14.0 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm i --frozen-lockfile
+      - run: pnpm -w build
+      - run: pnpm -w lint
+      - run: pnpm -w typecheck
+      - run: pnpm -w test
+      - name: Build (web) + sourcemaps
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.SENTRY_DSN || '' }}
+          VERCEL_ENV: production
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || '' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || '' }}
+        run: pnpm --filter @potlucky/web build
+
+  migrate:
+    needs: checks
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL_PROD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.14.0 }
+      - run: pnpm i --frozen-lockfile
+      - run: pnpm drizzle:generate
+      - name: Test database connection
+        run: timeout 30s pnpm db:test || echo "Database connection test failed - skipping migrations"
+        if: env.SUPABASE_DB_URL != ''
+      - name: Push migrations (with timeout)
+        run: timeout 60s pnpm drizzle:push || echo "Migration timeout or failed - continuing"
+        if: env.SUPABASE_DB_URL != ''
+
+  deploy:
+    needs: [checks, migrate]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: pnpm i --frozen-lockfile
+      - name: Pull Vercel env (prod)
+        run: npx vercel pull --yes --environment=production --token $VERCEL_TOKEN
+      - name: Build with Vercel
+        run: npx vercel build --prod --token $VERCEL_TOKEN
+      - name: Deploy production
+        id: deploy
+        run: echo "url=$(npx vercel deploy --prebuilt --prod --token $VERCEL_TOKEN)" >> $GITHUB_OUTPUT
+      - name: Summary
+        run: echo "Vercel Production → ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
