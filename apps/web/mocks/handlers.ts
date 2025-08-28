@@ -68,7 +68,7 @@ export const handlers = [
 
       // Calculate mock price
       const { items, currency } = requestResult.data
-      const subtotalCents = items.reduce((sum, item) => {
+      const subtotalCents = items.reduce((sum: number, item) => {
         const menuItem = mockMenu.items.find(mi => mi.id === item.menuItemId)
         return sum + (menuItem?.priceCents || 0) * item.quantity
       }, 0)
@@ -117,7 +117,7 @@ export const handlers = [
       if (!cartResult.success) {
         return HttpResponse.json({
           valid: false,
-          errors: cartResult.error.issues.map(e => e.message),
+          errors: cartResult.error.issues.map((e: { message: string }) => e.message),
         })
       }
 
@@ -126,7 +126,7 @@ export const handlers = [
       const errors: string[] = []
 
       for (const item of cart.items) {
-        const menuItem = mockMenu.items.find(mi => mi.id === item.menuItemId)
+        const menuItem = mockMenu.items.find((mi: { id: string }) => mi.id === item.menuItemId)
         if (!menuItem) {
           errors.push(`Menu item ${item.menuItemId} not found`)
         } else if (!menuItem.isAvailable) {
