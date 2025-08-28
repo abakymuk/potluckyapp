@@ -69,7 +69,16 @@ jobs:
         run: |
           export NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL"
           export NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY"
-          pnpm -w test
+          export SUPABASE_DB_URL="$SUPABASE_DB_URL"
+          export SUPABASE_SERVICE_ROLE="$SUPABASE_SERVICE_ROLE"
+          export ONLINE_ORDERING_V1="$ONLINE_ORDERING_V1"
+          export ORDER_QUEUE_V1="$ORDER_QUEUE_V1"
+          export AI_ADVISOR_V1="$AI_ADVISOR_V1"
+          pnpm --filter @potlucky/config test
+          pnpm --filter @potlucky/contracts test
+          pnpm --filter @potlucky/types test
+          pnpm --filter @potlucky/ui test
+          pnpm --filter @potlucky/web test
 
       - name: Run RLS e2e tests
         run: |
