@@ -1,6 +1,15 @@
-import 'dotenv/config'
 import { readFileSync } from 'node:fs'
 import { Client } from 'pg'
+
+// В CI среде переменные окружения передаются напрямую
+// В локальной разработке можно использовать dotenv
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    require('dotenv/config')
+  } catch {
+    // dotenv не установлен или .env файл отсутствует - это нормально для CI
+  }
+}
 
 const url = process.env.SUPABASE_DB_URL
 if (!url) throw new Error('SUPABASE_DB_URL is required')

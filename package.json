@@ -34,6 +34,7 @@
     "vitest": "^2.0.0"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.56.0",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.5",

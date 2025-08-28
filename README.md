@@ -91,6 +91,26 @@ AI_ADVISOR_V1=false
 - `pnpm db:rls` - применить RLS политики
 - `pnpm test:rls` - запустить e2e-тесты RLS
 
+### Auth check (локально)
+
+```bash
+# ENV
+export NEXT_PUBLIC_SUPABASE_URL=...
+export NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+export SUPABASE_DB_URL=...
+export SUPABASE_SERVICE_ROLE=...
+
+# сиды/rls (если ещё не выполняли)
+pnpm drizzle:generate && pnpm drizzle:push
+pnpm db:rls && pnpm db:seed
+
+# токен Alice
+node -e "import('@supabase/supabase-js').then(async m=>{ const c=new m.createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,{auth:{persistSession:false}}); const {data}=await c.auth.signInWithPassword({email:'alice@example.com',password:'Passw0rd!'}); console.log(data.session.access_token) })"
+
+# запрос к защищённому роуту
+curl -H "Authorization: Bearer <TOKEN>" http://localhost:3000/api/me | jq
+```
+
 ## Rules
 
 - Contracts-first, mocks-first, feature flags.
