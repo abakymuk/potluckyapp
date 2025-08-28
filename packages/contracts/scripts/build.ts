@@ -10,7 +10,7 @@ const __dirname = dirname(__filename)
 
 async function generateOpenApi() {
   const generator = new OpenApiGeneratorV3(registry.definitions)
-  
+
   const docs = generator.generateDocument({
     openapi: '3.1.0',
     info: {
@@ -32,13 +32,11 @@ async function generateOpenApi() {
 
   const outputPath = resolve(__dirname, '../dist/openapi.json')
   writeFileSync(outputPath, JSON.stringify(docs, null, 2))
-  
-  // eslint-disable-next-line no-console
+
   console.log('✅ OpenAPI documentation generated:', outputPath)
 }
 
 generateOpenApi().catch((error) => {
-  // eslint-disable-next-line no-console
   console.error('❌ Failed to generate OpenAPI:', error)
   process.exit(1)
 })

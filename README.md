@@ -94,44 +94,78 @@ AI_ADVISOR_V1=false
 
 ## CI/CD
 
-### Production Pipeline
-- **Workflow:** `.github/workflows/ci.yml`
-- **Triggers:** push в `main`, `develop`, PR
-- **Actions:** lint → typecheck → test → RLS → build → deploy to Vercel
-
-### Preview Pipeline
+### PR Preview Pipeline
 - **Workflow:** `.github/workflows/ci-preview.yml`
 - **Triggers:** Pull Request (opened, synchronize, reopened)
-- **Actions:** checks → Vercel preview → PR comment with URL
+- **Actions:** checks → migrate (preview-DB) → Vercel preview → PR comment with URL
+- **Concurrency:** отменяет предыдущие раннеры на том же PR
 
-### Security Pipeline
-- **Workflow:** `.github/workflows/security.yml`
-- **Triggers:** daily schedule, push, PR
-- **Actions:** security audit → Snyk → CodeQL analysis
+### Production Pipeline
+- **Workflow:** `.github/workflows/release-prod.yml`
+- **Triggers:** push в `main`
+- **Actions:** checks → migrate (prod-DB) → Vercel production deploy
+- **Environment:** production с required reviewers (опционально)
 
-### Release Pipeline
-- **Workflow:** `.github/workflows/release.yml`
-- **Triggers:** push tags (v*)
-- **Actions:** full test suite → production deploy → GitHub release
+### Required Secrets (GitHub → Settings → Secrets and variables → Actions)
 
-### Required Secrets
+**Preview DB:**
+```
+SUPABASE_DB_URL_PREVIEW
+```
+
+**Production DB:**
+```
+SUPABASE_DB_URL_PROD
+```
+
+**Vercel:**
+```
+VERCEL_TOKEN
+VERCEL_ORG_ID
+VERCEL_PROJECT_ID
+```
+
+**Public Variables (если нужно для build):**
 ```
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
-SUPABASE_DB_URL
-SUPABASE_SERVICE_ROLE
-VERCEL_TOKEN
-VERCEL_TEAM_ID
-VERCEL_PROJECT_ID
-SNYK_TOKEN (optional)
 ```
 
-### Required Variables
+### Миграции и окружения
+
+- **Миграции:** всегда аддитивные (safe), обратимые — в отдельных PR
+- **Окружения:** отдельные строки подключения для preview/prod
+- **Запрещено:** пулять PR-миграции в prod
+- **Concurrency:** отменяем старые раннеры на PR и main
+- **Sourcemaps:** грузим в checks:build (Sentry токен в секрете)
+
+### Ручное управление
+
+**Деплой:**
+```bash
+# Production
+npx vercel deploy --prod
+
+# Preview
+npx vercel deploy
 ```
-ONLINE_ORDERING_V1
-ORDER_QUEUE_V1
-AI_ADVISOR_V1
+
+**Откат:**
+```bash
+# Vercel
+npx vercel rollback <deployment>
+
+# Миграции (пока не автоматизируем)
+# Держи SQL «down» отдельно
 ```
+
+### Правила ветвления
+
+1. **Feature ветки:** `feature/ticket-description`
+2. **PR в develop:** для новых функций
+3. **PR develop → main:** для релизов
+4. **Одна фича = одна миграция**
+5. **Миграции:** только аддитивные в PR, обратимые отдельно
 
 ## Contracts & Mocks
 
