@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@ui/_": ["packages/ui/src/_"],
+      "@config/_": ["packages/config/src/_"],
+      "@contracts/_": ["packages/contracts/src/_"],
+      "@types/_": ["packages/types/src/_"]
+    }
+  }
+}

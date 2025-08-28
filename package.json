@@ -1,0 +1,29 @@
+{
+  "name": "potlucky-monorepo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.14.0",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "validate:packages": "node ./infra/scripts/validate-packages.mjs",
+    "ci": "pnpm -w lint && pnpm -w typecheck && pnpm -w test && pnpm -w build && pnpm validate:packages",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "@types/node": "^20.14.10",
+    "@typescript-eslint/eslint-plugin": "^8.41.0",
+    "@typescript-eslint/parser": "^8.41.0",
+    "eslint": "^9.8.0",
+    "prettier": "^3.3.3",
+    "tsup": "^8.0.0",
+    "tsx": "^4.16.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.0.0"
+  }
+}
