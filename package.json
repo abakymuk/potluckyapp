@@ -16,7 +16,8 @@
     "drizzle:push": "drizzle-kit push --config ./infra/db/drizzle.config.ts",
     "db:seed": "tsx ./infra/db/seed.ts",
     "db:rls": "tsx ./infra/db/apply-rls.ts",
-    "test:rls": "vitest run infra/db/tests/rls.e2e.test.ts"
+    "test:rls": "vitest run infra/db/tests/rls.e2e.test.ts",
+    "contracts:build": "pnpm --filter @potlucky/contracts typecheck && pnpm --filter @potlucky/contracts build && pnpm --filter @potlucky/contracts openapi"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",

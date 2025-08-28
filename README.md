@@ -16,6 +16,7 @@
 - `pnpm -w build|dev|lint|typecheck|test`
 - `pnpm validate:packages`
 - `pnpm format` – форматирование кода
+- `pnpm contracts:build` – сборка контрактов и генерация OpenAPI
 
 ## Development Workflow
 
@@ -131,6 +132,42 @@ ONLINE_ORDERING_V1
 ORDER_QUEUE_V1
 AI_ADVISOR_V1
 ```
+
+## Contracts & Mocks
+
+### Building Contracts
+```bash
+# Build contracts and generate OpenAPI documentation
+pnpm contracts:build
+```
+
+This generates:
+- `packages/contracts/dist/openapi.json` - OpenAPI v3.1 specification
+- TypeScript types for Menu, Cart, and Price schemas
+- Zod validation schemas
+
+### Feature Flags
+The following feature flags control API availability:
+- `ONLINE_ORDERING_V1` - Controls menu, price, and cart validation APIs
+
+When disabled, APIs return 404. When enabled, they return 501 (not implemented).
+
+### MSW Development
+MSW (Mock Service Worker) is configured for development:
+- Mock handlers for `/api/menu`, `/api/price`, `/api/cart/validate`
+- Validates requests/responses against Zod schemas
+- Provides realistic mock data for development
+
+To use MSW in development:
+```bash
+# Start development server with MSW
+pnpm dev
+```
+
+The mock endpoints will be available at:
+- `GET /api/menu` - Returns mock menu data
+- `POST /api/price` - Calculates mock pricing
+- `POST /api/cart/validate` - Validates cart structure
 
 ## Rules
 
