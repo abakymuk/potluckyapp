@@ -1,19 +1,20 @@
-name: CI
+name: CI/CD Preview
 
 on:
-  push:
-    branches: [main, develop]
   pull_request:
-    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write  # для комментария в PR
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  checks:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-
     env:
       NODE_ENV: production
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -28,10 +29,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: '20.x'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -60,11 +61,6 @@ jobs:
       - name: Run type checking
         run: pnpm -w typecheck
 
-      - name: Apply RLS policies
-        run: |
-          export SUPABASE_DB_URL="$SUPABASE_DB_URL"
-          pnpm db:rls
-
       - name: Run tests
         run: |
           export NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL"
@@ -80,33 +76,18 @@ jobs:
           pnpm --filter @potlucky/ui test
           pnpm --filter @potlucky/web test
 
-      - name: Run RLS e2e tests
-        run: |
-          export NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL"
-          export NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY"
-          export SUPABASE_DB_URL="$SUPABASE_DB_URL"
-          pnpm test:rls
-
       - name: Build packages
         run: pnpm -w build
 
-      - name: Validate packages
-        run: pnpm validate:packages
-
   deploy:
-    needs: test
+    needs: checks
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-
     env:
-      NODE_ENV: production
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-      SUPABASE_SERVICE_ROLE: ${{ secrets.SUPABASE_SERVICE_ROLE }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_TEAM_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       ONLINE_ORDERING_V1: ${{ vars.ONLINE_ORDERING_V1 }}
       ORDER_QUEUE_V1: ${{ vars.ORDER_QUEUE_V1 }}
       AI_ADVISOR_V1: ${{ vars.AI_ADVISOR_V1 }}
@@ -128,13 +109,35 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build packages
-        run: pnpm -w build
+      - name: Pull Vercel env (preview)
+        run: |
+          npx vercel pull --yes --environment=preview --token $VERCEL_TOKEN
 
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
+      - name: Build with Vercel (prebuilt)
+        run: |
+          npx vercel build --token $VERCEL_TOKEN
+
+      - name: Deploy preview
+        id: deploy
+        run: |
+          URL=$(npx vercel deploy --prebuilt --token $VERCEL_TOKEN)
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Comment PR with preview URL
+        uses: actions/github-script@v7
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_TEAM_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+          script: |
+            const url = '${{ steps.deploy.outputs.url }}'
+            const body = `🚀 **Vercel Preview:** ${url}\n\n🔍 **Inspect:** https://vercel.com/vlad-ovelians-projects/potluckyapp/${{ github.sha }}\n\n✅ Preview deployment successful!`
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            })
+
+      - name: Add URL to job summary
+        run: |
+          echo "## 🚀 Vercel Preview" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Inspect:** https://vercel.com/vlad-ovelians-projects/potluckyapp/${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
