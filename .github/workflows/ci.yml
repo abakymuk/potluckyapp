@@ -6,15 +6,6 @@ on:
   pull_request:
     branches: [main, develop]
 
-env:
-  NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-  SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-  SUPABASE_SERVICE_ROLE: ${{ secrets.SUPABASE_SERVICE_ROLE }}
-  ONLINE_ORDERING_V1: ${{ vars.ONLINE_ORDERING_V1 }}
-  ORDER_QUEUE_V1: ${{ vars.ORDER_QUEUE_V1 }}
-  AI_ADVISOR_V1: ${{ vars.AI_ADVISOR_V1 }}
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -22,6 +13,15 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x, 20.x]
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SUPABASE_SERVICE_ROLE: ${{ secrets.SUPABASE_SERVICE_ROLE }}
+      ONLINE_ORDERING_V1: ${{ vars.ONLINE_ORDERING_V1 }}
+      ORDER_QUEUE_V1: ${{ vars.ORDER_QUEUE_V1 }}
+      AI_ADVISOR_V1: ${{ vars.AI_ADVISOR_V1 }}
 
     steps:
       - name: Checkout code
