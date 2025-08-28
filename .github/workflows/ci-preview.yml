@@ -1,0 +1,81 @@
+name: ci-preview
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm i --frozen-lockfile
+      - run: pnpm -w lint
+      - run: pnpm -w typecheck
+      - run: pnpm -w test
+      - name: Build (web)
+        run: pnpm --filter @potlucky/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || '' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || '' }}
+          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.SENTRY_DSN || '' }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN || '' }}
+          VERCEL_ENV: preview
+
+  migrate:
+    needs: checks
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL_PREVIEW }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - run: pnpm i --frozen-lockfile
+      - run: pnpm drizzle:generate
+      - run: pnpm drizzle:push
+
+  deploy:
+    needs: [checks, migrate]
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: pnpm i --frozen-lockfile
+      - name: Pull Vercel env (preview)
+        run: npx vercel pull --yes --environment=preview --token $VERCEL_TOKEN
+      - name: Build with Vercel
+        run: npx vercel build --token $VERCEL_TOKEN
+      - name: Deploy preview
+        id: deploy
+        run: echo "url=$(npx vercel deploy --prebuilt --token $VERCEL_TOKEN)" >> $GITHUB_OUTPUT
+      - name: Comment PR with URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = '${{ steps.deploy.outputs.url }}'
+            const body = `🚀 **Vercel Preview:** ${url}`
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            })
+      - name: Job summary
+        run: echo "Vercel Preview → ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY

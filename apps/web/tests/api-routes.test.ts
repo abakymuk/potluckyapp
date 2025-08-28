@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NextRequest } from 'next/server'
 import { GET as getMenu } from '../app/api/menu/route'
 import { POST as postPrice } from '../app/api/price/route'
 import { POST as postCartValidate } from '../app/api/cart/validate/route'
