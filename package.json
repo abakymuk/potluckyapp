@@ -10,6 +10,12 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "validate:packages": "node ./infra/scripts/validate-packages.mjs",
+    "drizzle:generate": "drizzle-kit generate:pg --config ./infra/db/drizzle.config.ts",
+    "drizzle:push": "drizzle-kit push:pg --config ./infra/db/drizzle.config.ts",
+    "db:seed": "tsx ./infra/db/seed.ts",
+    "db:rls": "tsx ./infra/db/apply-rls.ts",
+    "test:rls": "vitest run infra/db/tests/rls.e2e.test.ts",
+    "contracts:build": "pnpm --filter @potlucky/contracts typecheck && pnpm --filter @potlucky/contracts build && pnpm --filter @potlucky/contracts openapi",
     "ci": "pnpm -w lint && pnpm -w typecheck && pnpm -w test && pnpm -w build && pnpm validate:packages",
     "format": "prettier --write ."
   },
