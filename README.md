@@ -75,6 +75,22 @@ AI_ADVISOR_V1=false
 - `profiles` - профили пользователей
 - `memberships` - членство в организациях
 
+### RLS & Auth
+
+- RLS включён на organizations/profiles/memberships.
+- Функция `auth_profile_id()` (SECURITY DEFINER) — безопасно вычисляет профиль по JWT.
+- Триггер `on_auth_user_created` создаёт профиль при регистрации.
+- В рантайме используются только anon-ключи; все доступы контролируются RLS.
+- Для сидов/тестов необходим `SUPABASE_SERVICE_ROLE`.
+
+### Commands
+
+- `pnpm drizzle:generate` - генерировать миграции
+- `pnpm drizzle:push` - применить миграции к БД
+- `pnpm db:seed` - заполнить БД тестовыми данными
+- `pnpm db:rls` - применить RLS политики
+- `pnpm test:rls` - запустить e2e-тесты RLS
+
 ## Rules
 
 - Contracts-first, mocks-first, feature flags.

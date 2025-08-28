@@ -14,7 +14,9 @@
     "format": "prettier --write .",
     "drizzle:generate": "drizzle-kit generate --config ./infra/db/drizzle.config.ts",
     "drizzle:push": "drizzle-kit push --config ./infra/db/drizzle.config.ts",
-    "db:seed": "tsx ./infra/db/seed.ts"
+    "db:seed": "tsx ./infra/db/seed.ts",
+    "db:rls": "tsx ./infra/db/apply-rls.ts",
+    "test:rls": "vitest run infra/db/tests/rls.e2e.test.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
