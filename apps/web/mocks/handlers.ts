@@ -68,8 +68,8 @@ export const handlers = [
 
       // Calculate mock price
       const { items, currency } = requestResult.data
-      const subtotalCents = items.reduce((sum: number, item) => {
-        const menuItem = mockMenu.items.find(mi => mi.id === item.menuItemId)
+      const subtotalCents = items.reduce((sum: number, item: { menuItemId: string; quantity: number }) => {
+        const menuItem = mockMenu.items.find((mi: { id: string }) => mi.id === item.menuItemId)
         return sum + (menuItem?.priceCents || 0) * item.quantity
       }, 0)
 
