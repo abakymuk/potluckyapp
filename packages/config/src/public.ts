@@ -1,3 +1,4 @@
+/* eslint-env node */
 import { PublicEnvSchema } from './schema'
 import type { FeatureFlags } from './flags'
 

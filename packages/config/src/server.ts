@@ -1,3 +1,4 @@
+/* eslint-env node */
 import { ServerEnvSchema } from './schema'
 
 const parsed = ServerEnvSchema.safeParse({
