@@ -47,6 +47,12 @@ NEXT_PUBLIC_SUPABASE_URL=https://wnqzzplxfoutblsksvud.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InducXp6cGx4Zm91dGJsc2tzdnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYzNTI2OTUsImV4cCI6MjA3MTkyODY5NX0.xKBvnarYHs3qAV1ug5HVNBdfiERMOGv23gCZWYfvFtk
 ```
 
+### Database env (for migrations and seeding)
+
+```
+SUPABASE_DB_URL=postgres://postgres:Gariba1ddi@db.wnqzzplxfoutblsksvud.supabase.co:6543/postgres?sslmode=require
+```
+
 ### Feature flags (optional, default=false)
 
 ```
@@ -54,6 +60,20 @@ ONLINE_ORDERING_V1=false
 ORDER_QUEUE_V1=false
 AI_ADVISOR_V1=false
 ```
+
+## Database
+
+### Commands
+
+- `pnpm drizzle:generate` - генерировать миграции
+- `pnpm drizzle:push` - применить миграции к БД
+- `pnpm db:seed` - заполнить БД тестовыми данными
+
+### Schema
+
+- `organizations` - организации
+- `profiles` - профили пользователей
+- `memberships` - членство в организациях
 
 ## Rules
 
